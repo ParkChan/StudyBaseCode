@@ -9,7 +9,6 @@ import com.chan.ui.bookmark.repository.BookmarkRepository
 import com.chan.ui.detail.ProductDetailContractData
 import com.chan.ui.home.model.ProductModel
 import com.chan.ui.home.repository.GoodChoiceRepository
-import com.orhanobut.logger.Logger
 
 class HomeViewModel(
     private val goodChoiceRepository: GoodChoiceRepository,
@@ -38,53 +37,34 @@ class HomeViewModel(
             if (isProgress || requestePage > totalPage) {
                 return
             }
-            requestNext()
+            requestListData(false)
         }
     }
 
-    fun requestFirst() {
-        initPageInfo()
+    fun requestListData(isFirstPage: Boolean) {
+        if(isFirstPage){
+            initPageInfo()
+        }
         isProgress = true
         compositeDisposable.add(
             goodChoiceRepository.requestData(
                 defaultStartPageNumber,
                 onSuccess = {
-
-                    _productListData.value = it.data.productList
-
-                    val totalCount = it.data.totalCount
-                    totalPage = if (totalCount / NETWORK_ROW_COUNT > 0) {
-                        (totalCount / NETWORK_ROW_COUNT) + 1
-                    } else {
-                        defaultTotalPageCnt
+                    if(isFirstPage){
+                        val totalCount = it.data.totalCount
+                        totalPage = if (totalCount / NETWORK_ROW_COUNT > 0) {
+                            (totalCount / NETWORK_ROW_COUNT) + 1
+                        } else {
+                            defaultTotalPageCnt
+                        }
                     }
-                    requestePage++
-                    isProgress = false
-                },
-                onFail = {
-                    _errorMessage.value = it
-                    isProgress = false
-                }
-            )
-        )
-    }
-
-    private fun requestNext() {
-        isProgress = true
-        //Logger.d("now Page >>> $requestedPage total Page >>> $totalPage")
-        compositeDisposable.add(
-            goodChoiceRepository.requestData(
-                requestePage,
-                onSuccess = {
                     _productListData.value = it.data.productList
                     requestePage++
                     isProgress = false
-                    Logger.d("requestNext >>> onSuccess $isProgress")
                 },
                 onFail = {
                     _errorMessage.value = it
                     isProgress = false
-                    Logger.d("requestNext >>>  $isProgress")
                 }
             )
         )
